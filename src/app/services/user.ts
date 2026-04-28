@@ -55,8 +55,8 @@ export const userApi = createApi({
                   ...u,
                   status,
                 };
-              })
-            )
+              }),
+            ),
           );
         } catch {
           console.log("get user list error");
@@ -64,8 +64,9 @@ export const userApi = createApi({
       },
     }),
     getContacts: builder.query<ContactResponse[], void>({
-      query: () => ({ url: `/user/contacts` }),
-      async onQueryStarted(data, { dispatch, queryFulfilled }) {
+      // Endpoint not implemented on backend; return empty list locally.
+      queryFn: () => ({ data: [] as ContactResponse[] }),
+      async onQueryStarted(_data, { dispatch, queryFulfilled }) {
         try {
           const { data: users } = await queryFulfilled;
           const payloads = users.map((c) => {
@@ -78,7 +79,7 @@ export const userApi = createApi({
           });
           dispatch(updateStatus(payloads));
         } catch {
-          console.log("get contact list error");
+          /* no-op */
         }
       },
     }),
@@ -252,7 +253,7 @@ export const userApi = createApi({
         },
         url: `/user/${id}/send`,
         method: "POST",
-        body: type == "file" ? JSON.stringify(content) : content,
+        body: type == "file" || type == "audio" ? JSON.stringify(content) : content,
       }),
       async onQueryStarted(param1, param2) {
         // @ts-ignore

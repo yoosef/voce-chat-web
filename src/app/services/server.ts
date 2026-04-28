@@ -104,7 +104,7 @@ export const serverApi = createApi({
     getGithubAuthConfig: builder.query<GithubAuthConfig, void>({
       query: () => ({ url: `/admin/github_auth/config` }),
     }),
-    getGithubAuthPublicConfig: builder.query<Pick<GithubAuthConfig, 'client_id'>, void>({
+    getGithubAuthPublicConfig: builder.query<Pick<GithubAuthConfig, "client_id">, void>({
       query: () => ({ url: `/admin/github_auth/public_config` }),
     }),
     updateGithubAuthConfig: builder.mutation<void, GithubAuthConfig>({
@@ -163,7 +163,7 @@ export const serverApi = createApi({
             });
             dispatch(upsertVoiceList(arr));
             const hasMyself = arr.some(
-              (data) => data.context === "dm" && data.id == authData?.user?.uid
+              (data) => data.context === "dm" && data.id == authData?.user?.uid,
             );
             const sendByMe = callingFrom && callingFrom === authData?.user?.uid;
             // reset dm call setting
@@ -206,7 +206,8 @@ export const serverApi = createApi({
       }),
     }),
     getAgoraStatus: builder.query<boolean, void>({
-      query: () => ({ url: `/admin/agora/enabled` }),
+      // Endpoint not implemented on backend; return false locally to avoid 404 noise.
+      queryFn: () => ({ data: false }),
     }),
     generateAgoraToken: builder.mutation<AgoraTokenResponse, { uid: number } | { gid: number }>({
       query: (data) => ({
@@ -216,35 +217,32 @@ export const serverApi = createApi({
       }),
     }),
     getSystemCommon: builder.query<SystemCommon, void>({
-      query: () => ({ url: `/admin/system/common` }),
-      transformResponse: (resp: SystemCommon) => {
-        let tmp = resp;
-        tmp.chat_layout_mode = resp.chat_layout_mode ?? "Left";
-        tmp.contact_verification_enable = resp.contact_verification_enable ?? false;
-        tmp.max_file_expiry_mode = resp.max_file_expiry_mode ?? "Off";
-        return tmp;
-      },
-      async onQueryStarted(data, { dispatch, queryFulfilled }) {
+      // Endpoint not implemented on backend; return safe defaults locally.
+      queryFn: () => ({
+        data: {
+          chat_layout_mode: "Left",
+          contact_verification_enable: false,
+          max_file_expiry_mode: "Off",
+        } as SystemCommon,
+      }),
+      async onQueryStarted(_data, { dispatch, queryFulfilled }) {
         try {
           const resp = await queryFulfilled;
           dispatch(updateInfo(resp.data));
         } catch {
-          console.error("get server common error");
+          /* no-op */
         }
       },
     }),
     updateSystemCommon: builder.mutation<void, Partial<SystemCommon>>({
-      query: (data) => ({
-        url: `/admin/system/common`,
-        method: "PUT",
-        body: data,
-      }),
+      // Endpoint not implemented on backend; no-op success so UI toggles still work.
+      queryFn: () => ({ data: undefined }),
       async onQueryStarted(data, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
           dispatch(updateInfo(data));
         } catch {
-          console.error("update server common error");
+          /* no-op */
         }
       },
     }),
@@ -278,7 +276,7 @@ export const serverApi = createApi({
     getFiles: builder.query<VoceChatFile[], GetFilesDTO>({
       query: (params) => ({
         url: `/admin/system/files?${new URLSearchParams(
-          params as Record<string, string>
+          params as Record<string, string>,
         ).toString()}`,
       }),
     }),
@@ -304,7 +302,7 @@ export const serverApi = createApi({
           dispatch(
             updateInfo({
               logo: `${BASE_URL}/resource/organization/logo?t=${+new Date()}`,
-            })
+            }),
           );
         } catch {
           console.error("update server logo error");

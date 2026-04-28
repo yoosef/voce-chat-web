@@ -37,7 +37,12 @@ const VoiceMessage = ({ file_path }: { file_path: string }) => {
         hideScrollbar: true,
         normalize: true
       });
-      wave.load(audioSrc);
+      wave.load(audioSrc).catch((e) => {
+        // destroy() during pending load rejects with AbortError; ignore it.
+        if (!(e instanceof DOMException && e.name === "AbortError")) {
+          console.error(e);
+        }
+      });
       wave.on("play", function () {
         setPlaying(true);
       });
@@ -68,7 +73,16 @@ const VoiceMessage = ({ file_path }: { file_path: string }) => {
     return () => {
       const current = VoiceMap[file_path];
       if (current) {
-        current.destroy();
+        try {
+          current.destroy();
+        } catch (e) {
+          // WaveSurfer aborts the in-flight fetch on destroy() and rethrows
+          // the AbortError. It's expected during unmount; swallow it.
+          if (!(e instanceof DOMException && e.name === "AbortError")) {
+            console.error(e);
+          }
+        }
+        VoiceMap[file_path] = null;
       }
     };
   }, [file_path]);

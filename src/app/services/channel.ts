@@ -20,10 +20,10 @@ export const channelApi = createApi({
   refetchOnFocus: true,
   endpoints: (builder) => ({
     getChannels: builder.query<Channel[], void>({
-      query: () => ({ url: `/group` })
+      query: () => ({ url: `/group` }),
     }),
     getChannel: builder.query<Channel, number>({
-      query: (id) => ({ url: `/group/${id}` })
+      query: (id) => ({ url: `/group/${id}` }),
     }),
     leaveChannel: builder.query<void, number>({
       query: (id) => ({ url: `/group/${id}/leave` }),
@@ -34,16 +34,16 @@ export const channelApi = createApi({
         } catch {
           console.error("channel update failed");
         }
-      }
+      },
     }),
     createChannel: builder.mutation<{ gid: number; created_at: number } | number, CreateChannelDTO>(
       {
         query: (data) => ({
           url: "/group",
           method: "POST",
-          body: data
-        })
-      }
+          body: data,
+        }),
+      },
     ),
     changeChannelType: builder.mutation<
       number,
@@ -52,25 +52,25 @@ export const channelApi = createApi({
       query: ({ id, is_public, members }) => ({
         url: `/group/${id}/change_type`,
         method: "POST",
-        body: members ? { is_public, members } : { is_public }
+        body: members ? { is_public, members } : { is_public },
       }),
       async onQueryStarted({ id, is_public, members }, { dispatch, queryFulfilled, getState }) {
         try {
           await queryFulfilled;
           // 后面有可能删掉的临时逻辑：及时更新members
           const userIds = (getState() as RootState).users.ids;
-          const mbs = is_public ? [] : members ?? userIds;
+          const mbs = is_public ? [] : (members ?? userIds);
           dispatch(updateChannel({ gid: id, members: mbs }));
         } catch {
           console.error("channel update failed");
         }
-      }
+      },
     }),
     updateChannel: builder.mutation<void, ChannelDTO>({
       query: ({ id, ...data }) => ({
         url: `/group/${id}`,
         method: "PUT",
-        body: data
+        body: data,
       }),
       async onQueryStarted({ id, name, description }, { dispatch, queryFulfilled }) {
         // id: who send to ,from_uid: who sent
@@ -80,25 +80,25 @@ export const channelApi = createApi({
         } catch {
           console.error("channel update failed");
         }
-      }
+      },
     }),
     createInviteLink: builder.query<string, { expire: number; times: number }>({
       query: (data) => ({
         headers: {
           "content-type": "text/plain",
-          accept: "text/plain"
+          accept: "text/plain",
         },
         url: `/group/create_reg_magic_link?expired_in=${data.expire}&max_times=${data.times}`,
-        responseHandler: "text"
+        responseHandler: "text",
       }),
       transformResponse: (link: string) => {
         return transformInviteLink(link);
-      }
+      },
     }),
     clearChannelMessage: builder.query<void, number>({
       query: (id) => ({
         url: `/group/${id}/clear`,
-        method: "DELETE"
+        method: "DELETE",
       }),
       async onQueryStarted(id, { dispatch, getState, queryFulfilled }) {
         const { channelMessage } = getState() as RootState;
@@ -113,7 +113,7 @@ export const channelApi = createApi({
         } catch {
           console.error("clear channel msg error");
         }
-      }
+      },
     }),
     createPrivateInviteLink: builder.query<
       string,
@@ -122,27 +122,27 @@ export const channelApi = createApi({
       query: (data) => ({
         headers: {
           "content-type": "text/plain",
-          accept: "text/plain"
+          accept: "text/plain",
         },
         // 七天过期
         url: `/group/create_invite_private_magic_link?expired_in=${data.expire}&max_times=${data.times}&gid=${data.cid}`,
-        responseHandler: "text"
+        responseHandler: "text",
       }),
       transformResponse: (link: string) => {
         return transformInviteLink(link);
-      }
+      },
     }),
     removeChannel: builder.query<void, number>({
       query: (id) => ({
         url: `/group/${id}`,
-        method: "DELETE"
+        method: "DELETE",
       }),
       async onQueryStarted(id, { dispatch, getState, queryFulfilled }) {
         const {
           channelMessage,
           ui: {
-            rememberedNavs: { chat: rememberedPath }
-          }
+            rememberedNavs: { chat: rememberedPath },
+          },
         } = getState() as RootState;
         try {
           await queryFulfilled;
@@ -159,7 +159,7 @@ export const channelApi = createApi({
         } catch {
           console.error("remove channel error");
         }
-      }
+      },
     }),
     sendChannelMsg: builder.mutation<
       number,
@@ -175,45 +175,45 @@ export const channelApi = createApi({
       query: ({ id, content, type = "text", properties = {} }) => ({
         headers: {
           "content-type": ContentTypes[type],
-          "X-Properties": properties ? encodeBase64(JSON.stringify(properties)) : ""
+          "X-Properties": properties ? encodeBase64(JSON.stringify(properties)) : "",
         },
         url: `/group/${id}/send`,
         method: "POST",
-        body: type == "file" ? JSON.stringify(content) : content
+        body: type == "file" || type == "audio" ? JSON.stringify(content) : content,
       }),
       async onQueryStarted(param1, param2) {
         await onMessageSendStarted.call(this, param1, param2, "channel");
-      }
+      },
     }),
     addMembers: builder.mutation<void, { id: number; members: number[] }>({
       query: ({ id, members }) => ({
         url: `/group/${id}/members/add`,
         method: "POST",
-        body: members
-      })
+        body: members,
+      }),
     }),
     removeMembers: builder.mutation<void, { id: number; members: number[] }>({
       query: ({ id, members }) => ({
         url: `/group/${id}/members/remove`,
         method: "POST",
-        body: members
-      })
+        body: members,
+      }),
     }),
     joinPrivateChannel: builder.mutation<Channel, { magic_token: string }>({
       query: (body) => ({
         url: `/user/join_private`,
         method: "POST",
-        body
-      })
+        body,
+      }),
     }),
     updateIcon: builder.mutation<void, { gid: number; image: File }>({
       query: ({ gid, image }) => ({
         headers: {
-          "content-type": "image/png"
+          "content-type": "image/png",
         },
         url: `/group/${gid}/avatar`,
         method: "POST",
-        body: image
+        body: image,
       }),
       async onQueryStarted({ gid }, { dispatch, queryFulfilled }) {
         try {
@@ -221,15 +221,15 @@ export const channelApi = createApi({
           dispatch(
             updateChannel({
               gid,
-              icon: `${BASE_URL}/resource/group_avatar?gid=${gid}&t=${+new Date()}`
-            })
+              icon: `${BASE_URL}/resource/group_avatar?gid=${gid}&t=${+new Date()}`,
+            }),
           );
         } catch (error) {
           console.error("err", error);
         }
-      }
-    })
-  })
+      },
+    }),
+  }),
 });
 
 export const {

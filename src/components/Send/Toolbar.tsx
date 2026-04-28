@@ -9,6 +9,7 @@ import FullscreenIcon from "@/assets/icons/fullscreen.svg";
 import MarkdownIcon from "@/assets/icons/markdown.svg";
 import SendIcon from "@/assets/icons/send.svg";
 import Tooltip from "../Tooltip";
+import VoiceRecorder from "./VoiceRecorder";
 
 type Props = {
   sendMessages: () => void;
@@ -96,13 +97,15 @@ const Toolbar: FC<Props> = ({
               </label>
             </div>
           </Tooltip>
-          {sendVisible && (
+          {sendVisible ? (
             <Tooltip placement="top" tip="Send">
               <SendIcon
                 className={"w-6 h-6 cursor-pointer animate-zoomIn dark:fill-gray-300"}
                 onClick={sendMessages.bind(null)}
               />
             </Tooltip>
+          ) : (
+            <VoiceRecorder context={context} to={to} />
           )}
         </>
       )}

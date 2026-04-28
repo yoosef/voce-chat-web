@@ -24,8 +24,11 @@ const RequireAuth: FC<Props> = ({ children, redirectTo = "/login", guestMode }) 
   console.info("check basic info", guestMode);
   // 初始化login配置检查
   if (typeof guestMode == "undefined") {
-    // tricky mark
-    window.AUTO_RELOAD = true;
+    // Show a transient loading spinner while getLoginConfig resolves.
+    // Note: do NOT set window.AUTO_RELOAD here — its 5s location.reload() loop
+    // re-fires /admin/system/initialized and /admin/login/config endlessly when
+    // the backend is unreachable. getLoginConfig now dispatches a fallback on
+    // failure, so guestMode will be defined shortly without needing a reload.
     return <Loading fullscreen={true} reload context="auth-route" />;
   }
   //  未初始化 则先走setup 流程
